@@ -46,49 +46,39 @@ export class NgxDropzoneService {
 
 		const rejectedFiles: RejectedFile[] = [];
 		const addedFiles: FileExtended[] = [];
-		const promises: Promise<void>[] = [];
-		const total = files.length;
-		var current = 0;
+		var remainingFilesNumber = files.length;
 
-		for (let i = 0; i < total; i++) {
+		const filesArray = Array.from(files);
 
-			var file = files.item(i);
+		for (var file of filesArray) {
+			remainingFilesNumber--;
 
 			if (!this.isAccepted(file, accept)) {
 				this.rejectFile(rejectedFiles, file, 'type');
+				onFileProcessed.emit({ file, remainingFilesNumber });
 				continue;
 			}
 
 			if (!multiple && files.length >= 1) {
 				this.rejectFile(rejectedFiles, file, 'no_multiple');
+				onFileProcessed.emit({ file, remainingFilesNumber });
 				continue;
 			}
 
 			if (compress && file.type.search('image') != -1) {
-				promises.push(new Promise<void>((resolve) => {
-					const compressConfig = typeof compress != 'boolean' ? compress : undefined;
-					this.compressImage(file, compressConfig).then((file) => {
-						if (maxFileSize && file.size > maxFileSize) {
-							this.rejectFile(rejectedFiles, file, 'size');
-						} else {
-							addedFiles.push(file);
-						}
-						onFileProcessed.emit({ file, remainingFilesNumber: total });
-						resolve();
-						return;
-					});
-				}));
-			} else {
-				if (maxFileSize && file.size > maxFileSize) {
-					this.rejectFile(rejectedFiles, file, 'size');
-				}
-				addedFiles.push(file);
-				onFileProcessed.emit({ file, remainingFilesNumber: total });
+				const compressConfig = typeof compress != 'boolean' ? compress : undefined;
+				file = await this.compressImage(file, compressConfig);
 			}
+
+			if (maxFileSize && file.size > maxFileSize) {
+				this.rejectFile(rejectedFiles, file, 'size');
+				onFileProcessed.emit({ file, remainingFilesNumber });
+				continue;
+			}
+
+			addedFiles.push(file);
+			onFileProcessed.emit({ file, remainingFilesNumber });
 		}
-
-
-		await Promise.all(promises);
 
 		const result: FileSelectResult = {
 			addedFiles,
