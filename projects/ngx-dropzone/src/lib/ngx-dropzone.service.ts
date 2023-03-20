@@ -1,6 +1,6 @@
 import { EventEmitter, Injectable } from '@angular/core';
 import { NgxImageCompressService } from 'ngx-image-compress';
-import { FileProcessed, FileStatus } from '../public_api';
+import { NgxDropzoneFileProcessedEvent, FileStatus } from '../public_api';
 
 export interface CompressImageConfig {
 	orientation: number;
@@ -42,7 +42,7 @@ export class NgxDropzoneService {
 
 	constructor(private _ngxImageCompressService: NgxImageCompressService) { }
 
-	async parseFileList(files: FileList, accept: string, maxFileSize: number, multiple: boolean, compress: boolean | CompressImageConfig, onFileProcessed: EventEmitter<FileProcessed>): Promise<FileSelectResult> {
+	async parseFileList(files: FileList, accept: string, maxFileSize: number, multiple: boolean, compress: boolean | CompressImageConfig, onFileProcessed: EventEmitter<NgxDropzoneFileProcessedEvent>): Promise<FileSelectResult> {
 
 		const rejectedFiles: RejectedFile[] = [];
 		const addedFiles: FileExtended[] = [];

@@ -14,7 +14,7 @@ export enum FileStatus {
   ADDED = 'added',
 }
 
-export interface FileProcessed {
+export interface NgxDropzoneFileProcessedEvent {
   file: File;
   remainingFilesNumber: number;
   status: FileStatus;
@@ -47,7 +47,7 @@ export class NgxDropzoneComponent {
   @Output() readonly change = new EventEmitter<NgxDropzoneChangeEvent>();
 
   /** Emitted when a file has been read. */
-  @Output() readonly onFileProcessed = new EventEmitter<FileProcessed>();
+  @Output() readonly onFileProcessed = new EventEmitter<NgxDropzoneFileProcessedEvent>();
 
   /** Set the accepted file types. Defaults to '*'. */
   @Input() accept = '*';
