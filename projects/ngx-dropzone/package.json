@@ -1,8 +1,8 @@
 {
-  "name": "ngx-dropzone",
+  "name": "ngx-dropzone-compressing",
   "description": "A highly configurable dropzone component for Angular.",
-  "version": "3.1.0",
-  "author": "Peter Freeman",
+  "version": "1.0.1",
+  "author": "Mauro Sosa",
   "keywords": [
     "angular",
     "angular 2",
@@ -11,20 +11,26 @@
     "drop",
     "dropzone",
     "ngx-dropzone",
+    "ngx-dropzone-compressing",
+    "compressing",
+    "compression",
     "file",
     "upload",
     "image"
   ],
   "license": "MIT",
-  "homepage": "https://github.com/peterfreeman/ngx-dropzone",
+  "homepage": "https://github.com/tmcx/ngx-dropzone-compressing",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/peterfreeman/ngx-dropzone.git"
+    "url": "git+https://github.com/tmcx/ngx-dropzone-compressing.git"
+  },
+  "peerDependencies": {
+    "ngx-image-compress": "^13.1.16"
   },
   "dependencies": {
     "tslib": "^2.0.0"
   },
   "bugs": {
-    "url": "https://github.com/peterfreeman/ngx-dropzone/issues"
+    "url": "https://github.com/tmcx/ngx-dropzone-compressing/issues"
   }
 }

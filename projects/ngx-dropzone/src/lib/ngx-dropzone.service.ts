@@ -1,9 +1,23 @@
-import { Injectable } from '@angular/core';
+import { EventEmitter, Injectable } from '@angular/core';
+import { NgxImageCompressService } from 'ngx-image-compress';
+import { FileProcessed } from '../public_api';
+
+export interface CompressImageConfig {
+	orientation: number;
+	maxHeight?: number;
+	maxWidth?: number;
+	quality?: number;
+	ratio?: number;
+}
+
+export class FileExtended extends File {
+	originalSize?: number;
+}
 
 export interface FileSelectResult {
 
 	/** The added files, emitted in the filesAdded event. */
-	addedFiles: File[];
+	addedFiles: FileExtended[];
 
 	/** The rejected files, emitted in the filesRejected event. */
 	rejectedFiles: RejectedFile[];
@@ -26,31 +40,55 @@ export type RejectReason = 'type' | 'size' | 'no_multiple';
 @Injectable()
 export class NgxDropzoneService {
 
-	parseFileList(files: FileList, accept: string, maxFileSize: number, multiple: boolean): FileSelectResult {
+	constructor(private _ngxImageCompressService: NgxImageCompressService) { }
 
-		const addedFiles: File[] = [];
+	async parseFileList(files: FileList, accept: string, maxFileSize: number, multiple: boolean, compress: boolean | CompressImageConfig, onFileProcessed: EventEmitter<FileProcessed>): Promise<FileSelectResult> {
+
 		const rejectedFiles: RejectedFile[] = [];
+		const addedFiles: FileExtended[] = [];
+		const promises: Promise<void>[] = [];
+		const total = files.length;
+		var current = 0;
 
-		for (let i = 0; i < files.length; i++) {
-			const file = files.item(i);
+		for (let i = 0; i < total; i++) {
+
+			var file = files.item(i);
 
 			if (!this.isAccepted(file, accept)) {
 				this.rejectFile(rejectedFiles, file, 'type');
 				continue;
 			}
 
-			if (maxFileSize && file.size > maxFileSize) {
-				this.rejectFile(rejectedFiles, file, 'size');
-				continue;
-			}
-
-			if (!multiple && addedFiles.length >= 1) {
+			if (!multiple && files.length >= 1) {
 				this.rejectFile(rejectedFiles, file, 'no_multiple');
 				continue;
 			}
 
-			addedFiles.push(file);
+			if (compress && file.type.search('image') != -1) {
+				promises.push(new Promise<void>((resolve) => {
+					const compressConfig = typeof compress != 'boolean' ? compress : undefined;
+					this.compressImage(file, compressConfig).then((file) => {
+						if (maxFileSize && file.size > maxFileSize) {
+							this.rejectFile(rejectedFiles, file, 'size');
+						} else {
+							addedFiles.push(file);
+						}
+						onFileProcessed.emit({ file, remainingFilesNumber: total });
+						resolve();
+						return;
+					});
+				}));
+			} else {
+				if (maxFileSize && file.size > maxFileSize) {
+					this.rejectFile(rejectedFiles, file, 'size');
+				}
+				addedFiles.push(file);
+				onFileProcessed.emit({ file, remainingFilesNumber: total });
+			}
 		}
+
+
+		await Promise.all(promises);
 
 		const result: FileSelectResult = {
 			addedFiles,
@@ -95,5 +133,40 @@ export class NgxDropzoneService {
 		rejectedFile.reason = reason;
 
 		rejectedFiles.push(rejectedFile);
+	}
+
+	private async compressImage(imageFile: File, config: CompressImageConfig = { orientation: -1 }) {
+		const base64Image = await this.fileToBase64(imageFile);
+		const compressedImageBase64 = await this._ngxImageCompressService.compressFile(
+			base64Image,
+			config.orientation,
+			config.ratio,
+			config.quality,
+			config.maxWidth,
+			config.maxHeight,
+		);
+		const compressedImageFile = await this.base64ToFile(compressedImageBase64, imageFile.name, imageFile.type);
+		compressedImageFile['originalSize'] = imageFile.size;
+		return compressedImageFile;
+	}
+
+	private fileToBase64(file: File) {
+		const reader = new FileReader();
+		reader.readAsDataURL(file);
+		return (new Promise<string>((resolve, reject) => {
+			reader.onloadend = () => {
+				if (typeof reader.result == 'string') {
+					resolve(reader.result);
+				} else {
+					reject(reader.result);
+				}
+			};
+		}));
+	}
+
+	private async base64ToFile(base64File: string, name: string, type: string) {
+		const res: Response = await fetch(base64File);
+		const blob: Blob = await res.blob();
+		return new File([blob], name, { type });
 	}
 }

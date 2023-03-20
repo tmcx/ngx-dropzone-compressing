@@ -6,10 +6,11 @@ import { NgxDropzoneComponent } from './ngx-dropzone/ngx-dropzone.component';
 import { NgxDropzoneImagePreviewComponent } from './ngx-dropzone-preview/ngx-dropzone-image-preview/ngx-dropzone-image-preview.component';
 import { NgxDropzoneRemoveBadgeComponent } from './ngx-dropzone-preview/ngx-dropzone-remove-badge/ngx-dropzone-remove-badge.component';
 import { NgxDropzoneVideoPreviewComponent } from './ngx-dropzone-preview/ngx-dropzone-video-preview/ngx-dropzone-video-preview.component';
+import { NgxImageCompressService } from 'ngx-image-compress';
 
 @NgModule({
 	imports: [
-		CommonModule
+		CommonModule,
 	],
 	declarations: [
 		NgxDropzoneComponent,
@@ -26,6 +27,9 @@ import { NgxDropzoneVideoPreviewComponent } from './ngx-dropzone-preview/ngx-dro
 		NgxDropzoneImagePreviewComponent,
 		NgxDropzoneRemoveBadgeComponent,
 		NgxDropzoneVideoPreviewComponent,
-	]
+	],
+	providers: [
+		NgxImageCompressService,
+	],
 })
 export class NgxDropzoneModule { }

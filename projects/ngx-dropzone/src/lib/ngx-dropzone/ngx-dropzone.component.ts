@@ -1,12 +1,17 @@
 import { Component, EventEmitter, Output, Input, ViewChild, ContentChildren, QueryList, HostBinding, HostListener, Self, ElementRef } from '@angular/core';
-import {NgxDropzoneService, RejectedFile} from '../ngx-dropzone.service';
+import { CompressImageConfig, FileExtended, NgxDropzoneService, RejectedFile } from '../ngx-dropzone.service';
 import { coerceBooleanProperty, coerceNumberProperty } from '../helpers';
 import { NgxDropzonePreviewComponent } from '../ngx-dropzone-preview/ngx-dropzone-preview.component';
 
 export interface NgxDropzoneChangeEvent {
   source: NgxDropzoneComponent;
-  addedFiles: File[];
+  addedFiles: FileExtended[];
   rejectedFiles: RejectedFile[];
+}
+
+export interface FileProcessed {
+  file: File;
+  remainingFilesNumber: number;
 }
 
 @Component({
@@ -19,7 +24,7 @@ export class NgxDropzoneComponent {
 
   constructor(
     @Self() private service: NgxDropzoneService
-  ) {}
+  ) { }
 
   /** A list of the content-projected preview children. */
   @ContentChildren(NgxDropzonePreviewComponent, { descendants: true })
@@ -35,8 +40,14 @@ export class NgxDropzoneComponent {
   /** Emitted when any files were added or rejected. */
   @Output() readonly change = new EventEmitter<NgxDropzoneChangeEvent>();
 
+  /** Emitted when a file has been read. */
+  @Output() readonly onFileProcessed = new EventEmitter<FileProcessed>();
+
   /** Set the accepted file types. Defaults to '*'. */
   @Input() accept = '*';
+
+  /** Enable compression of image files. Default false(no compression). */
+  @Input() compress: boolean | CompressImageConfig = false;
 
   /** Disable any user interaction with the component. */
   @Input()
@@ -138,7 +149,7 @@ export class NgxDropzoneComponent {
   }
 
   @HostListener('drop', ['$event'])
-  _onDrop(event) {
+  async _onDrop(event) {
     if (this.disabled) {
       return;
     }
@@ -148,9 +159,9 @@ export class NgxDropzoneComponent {
 
     // if processDirectoryDrop is not enabled or webkitGetAsEntry is not supported we handle the drop as usual
     if (!this.processDirectoryDrop || !DataTransferItem.prototype.webkitGetAsEntry) {
-      this.handleFileDrop(event.dataTransfer.files);
+      await this.handleFileDrop(event.dataTransfer.files);
 
-    // if processDirectoryDrop is enabled and webkitGetAsEntry is supported we can extract files from a dropped directory
+      // if processDirectoryDrop is enabled and webkitGetAsEntry is supported we can extract files from a dropped directory
     } else {
       const droppedItems: DataTransferItem[] = event.dataTransfer.items;
 
@@ -176,7 +187,7 @@ export class NgxDropzoneComponent {
 
         // if no directory is dropped we are done and can call handleFileDrop
         if (!droppedDirectories.length && droppedFilesList.items.length) {
-          this.handleFileDrop(droppedFilesList.files);
+          await this.handleFileDrop(droppedFilesList.files);
         }
 
         // if directories are dropped we extract the files from these directories one-by-one and add it to droppedFilesList
@@ -188,12 +199,12 @@ export class NgxDropzoneComponent {
           }
 
           // wait for all directories to be proccessed to add the extracted files afterwards
-          Promise.all(extractFilesFromDirectoryCalls).then((allExtractedFiles: any[]) => {
+          Promise.all(extractFilesFromDirectoryCalls).then(async (allExtractedFiles: any[]) => {
             allExtractedFiles.reduce((a, b) => [...a, ...b]).forEach((extractedFile: File) => {
               droppedFilesList.items.add(extractedFile);
             });
 
-            this.handleFileDrop(droppedFilesList.files);
+            await this.handleFileDrop(droppedFilesList.files);
           });
         }
       }
@@ -216,7 +227,7 @@ export class NgxDropzoneComponent {
 
       // we need this to be a recursion because of this issue: https://bugs.chromium.org/p/chromium/issues/detail?id=514087
       const readEntries = () => {
-        dirReader.readEntries(async(dirItems) => {
+        dirReader.readEntries(async (dirItems) => {
           if (!dirItems.length) {
             resolve(files);
           } else {
@@ -241,19 +252,19 @@ export class NgxDropzoneComponent {
     }
   }
 
-  _onFilesSelected(event) {
+  async _onFilesSelected(event) {
     const files: FileList = event.target.files;
     this.handleFileDrop(files);
 
     // Reset the native file input element to allow selecting the same file again
     this._fileInput.nativeElement.value = '';
 
-    // fix(#32): Prevent the default event behaviour which caused the change event to emit twice.
+    // fix(#32): Prevent the default event behavior which caused the change event to emit twice.
     this.preventDefault(event);
   }
 
-  private handleFileDrop(files: FileList) {
-    const result = this.service.parseFileList(files, this.accept, this.maxFileSize, this.multiple);
+  private async handleFileDrop(files: FileList) {
+    const result = await this.service.parseFileList(files, this.accept, this.maxFileSize, this.multiple, this.compress, this.onFileProcessed);
 
     this.change.next({
       addedFiles: result.addedFiles,

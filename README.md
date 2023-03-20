@@ -1,6 +1,7 @@
-# ngx-dropzone
+# ngx-dropzone-compressing
 
-A lightweight and highly customizable Angular dropzone component for file uploads.
+A lightweight and highly customizable Angular dropzone component for file uploads integrating file compression functionalities.
+This package is an extended version of [ngx-dropzone](https://www.npmjs.com/package/ngx-dropzone) created by [Peter Freeman](https://github.com/peterfreeman).
 
 [![NPM](https://img.shields.io/npm/v/ngx-dropzone.svg)](https://www.npmjs.com/package/ngx-dropzone)
 [![Build Status](https://travis-ci.com/peterfreeman/ngx-dropzone.svg?branch=master)](https://travis-ci.com/peterfreeman/ngx-dropzone)
@@ -9,19 +10,17 @@ A lightweight and highly customizable Angular dropzone component for file upload
 
 <img src="_images/default_dropped.png">
 
-For a demo see [DEMO](https://ngx-dropzone.stackblitz.io). And the [CODE for the demo](https://stackblitz.com/edit/ngx-dropzone).
-
 ## Install
 
 ```
-$ npm install --save ngx-dropzone
+$ npm install --save ngx-dropzone-compressing
 ```
 
 ## Usage
 
 ```js
 // in app.module.ts
-import { NgxDropzoneModule } from 'ngx-dropzone';
+import { NgxDropzoneModule } from 'ngx-dropzone-compressing';
 
 @NgModule({
   ...
@@ -35,7 +34,7 @@ export class AppModule { }
 
 ```html
 <!-- in app.component.html -->
-<ngx-dropzone (change)="onSelect($event)">
+<ngx-dropzone (change)="onSelect($event)" [compress]="true">
 	<ngx-dropzone-label>Drop it, baby!</ngx-dropzone-label>
 	<ngx-dropzone-preview *ngFor="let f of files" [removable]="true" (removed)="onRemove(f)">
 		<ngx-dropzone-label>{{ f.name }} ({{ f.type }})</ngx-dropzone-label>
@@ -83,9 +82,26 @@ Use it as a stand-alone component `<ngx-dropzone></ngx-dropzone>` or by adding i
 It will add the classes `ngx-dz-hovered` and `ngx-dz-disabled` to its host element if necessary. You could override the styling of these effects if you like to.
 
 This component has the following Input properties:
-
+* `[compress]`: Allow the files compression.
+  * Currently compressing: 
+    * Image files:
+      * Defaults to `false`.
+      * Used package: [ngx-image-compress](https://www.npmjs.com/package/ngx-image-compress).
+      * The "originalSize" property will be added.
+      * Valid values: `boolean` or `CompressImageConfig`. Using just `true` to default CompressImageConfig configuration.
+      * `CompressImageConfig`:
+        | Parameter   | Type   | Description                                                                       |
+        | ----------- | ------ | --------------------------------------------------------------------------------- |
+        | orientation | number | EXIF Orientation value using the DOC_ORIENTATION enum value(optional, default: -1)|
+        | ratio       | number | Maximum scale factor as a percentage (optional, default: 50) <sup>[1](#fn1)</sup> |
+        | quality     | number | JPEG quality factor as a percentage (optional, default: 50) <sup>[2](#fn2)</sup>  |
+        | maxWidth    | number | Maximum width in pixels if you need to resize (optional, default: 0 - no resize)  |
+        | maxHeight   | number | Maximum height in pixels if you need to resize (optional, default: 0 - no resize) |
+        <a name="fn1">[1]</a> Ratio: "50" will decrease the resolution of each dimension by 2, i.e.: image of 2000 X 1500 pixels will become 1000 X 750 pixels, while the whole resolution will be reduced by 4.
+        <a name="fn2">[2]</a> Quality: For more info about this parameter, read [this guide](http://fotoforensics.com/tutorial-estq.php).
+  
 * `[multiple]`: Allow the selection of multiple files at once. Defaults to `true`.
-* `accept`: Set the accepted file types (as for a native file element). Defaults to `'*'`. Example: `accept="image/jpeg,image/jpg,image/png,image/gif"`
+* `[accept]`: Set the accepted file types (as for a native file element). Defaults to `'*'`. Example: `[accept]="image/jpeg,image/jpg,image/png,image/gif"`
 * `[maxFileSize]`: Set the maximum size a single file may have, in *bytes*. Defaults to `undefined`.
 * `[disabled]`: Disable any user interaction with the component. Defaults to `false`.
 * `[expandable]`: Allow the dropzone container to expand vertically as the number of previewed files increases. Defaults to `false` which means that it will allow for horizontal scrolling.
@@ -96,6 +112,7 @@ This component has the following Input properties:
 It has the following Output event:
 
 * `(change)`: Emitted when any files were added or rejected. It returns a `NgxDropzoneChangeEvent` with the properties `source: NgxDropzoneComponent`, `addedFiles: File[]` and `rejectedFiles: RejectedFile[]`.
+* `(onFileProcessed)`: Emitted when a file has been read. It returns a `FileProcessed` with the properties `file: File` and `remainingFilesNumber: number`.
 
 The `RejectedFile` extends the native File and adds an optional reason property to tell you why the file was rejected. Its value will be either `'type'` for the wrong acceptance type, `size` if it exceeds the maximum file size or `no_multiple` if multiple is set to false and more than one file is provided.
 
@@ -136,4 +153,4 @@ This component is used within the previews to remove selected files. You can use
 
 ## Licence
 
-MIT © Peter Freeman
+MIT © Mauro Sosa
