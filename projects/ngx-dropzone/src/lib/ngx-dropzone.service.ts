@@ -1,6 +1,6 @@
 import { EventEmitter, Injectable } from '@angular/core';
 import { NgxImageCompressService } from 'ngx-image-compress';
-import { FileProcessed } from '../public_api';
+import { FileProcessed, FileStatus } from '../public_api';
 
 export interface CompressImageConfig {
 	orientation: number;
@@ -55,13 +55,13 @@ export class NgxDropzoneService {
 
 			if (!this.isAccepted(file, accept)) {
 				this.rejectFile(rejectedFiles, file, 'type');
-				onFileProcessed.emit({ file, remainingFilesNumber });
+				onFileProcessed.emit({ file, remainingFilesNumber, status: FileStatus.REJECTED });
 				continue;
 			}
 
 			if (!multiple && files.length >= 1) {
 				this.rejectFile(rejectedFiles, file, 'no_multiple');
-				onFileProcessed.emit({ file, remainingFilesNumber });
+				onFileProcessed.emit({ file, remainingFilesNumber, status: FileStatus.REJECTED });
 				continue;
 			}
 
@@ -72,12 +72,12 @@ export class NgxDropzoneService {
 
 			if (maxFileSize && file.size > maxFileSize) {
 				this.rejectFile(rejectedFiles, file, 'size');
-				onFileProcessed.emit({ file, remainingFilesNumber });
+				onFileProcessed.emit({ file, remainingFilesNumber, status: FileStatus.REJECTED });
 				continue;
 			}
 
 			addedFiles.push(file);
-			onFileProcessed.emit({ file, remainingFilesNumber });
+			onFileProcessed.emit({ file, remainingFilesNumber, status: FileStatus.ADDED });
 		}
 
 		const result: FileSelectResult = {

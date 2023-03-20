@@ -112,7 +112,7 @@ This component has the following Input properties:
 It has the following Output event:
 
 * `(change)`: Emitted when any files were added or rejected. It returns a `NgxDropzoneChangeEvent` with the properties `source: NgxDropzoneComponent`, `addedFiles: File[]` and `rejectedFiles: RejectedFile[]`.
-* `(onFileProcessed)`: Emitted when a file has been read. It returns a `FileProcessed` with the properties `file: File` and `remainingFilesNumber: number`.
+* `(onFileProcessed)`: Emitted when a file has been read. It returns a `FileProcessed` with the properties `file: File`, `remainingFilesNumber: number` and `status: 'added' || 'rejected'`.
 
 The `RejectedFile` extends the native File and adds an optional reason property to tell you why the file was rejected. Its value will be either `'type'` for the wrong acceptance type, `size` if it exceeds the maximum file size or `no_multiple` if multiple is set to false and more than one file is provided.
 

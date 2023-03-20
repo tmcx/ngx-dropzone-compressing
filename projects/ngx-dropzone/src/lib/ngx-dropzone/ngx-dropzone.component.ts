@@ -9,9 +9,15 @@ export interface NgxDropzoneChangeEvent {
   rejectedFiles: RejectedFile[];
 }
 
+export enum FileStatus {
+  REJECTED = 'rejected',
+  ADDED = 'added',
+}
+
 export interface FileProcessed {
   file: File;
   remainingFilesNumber: number;
+  status: FileStatus;
 }
 
 @Component({

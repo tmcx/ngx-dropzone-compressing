@@ -1,7 +1,7 @@
 {
   "name": "ngx-dropzone-compressing",
   "description": "A highly configurable dropzone component for Angular.",
-  "version": "1.0.6",
+  "version": "1.1.0",
   "author": "Mauro Sosa",
   "keywords": [
     "angular",
