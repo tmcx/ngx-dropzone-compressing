@@ -1,6 +1,6 @@
 import { EventEmitter, Injectable } from '@angular/core';
 import { NgxImageCompressService } from 'ngx-image-compress';
-import { NgxDropzoneFileProcessedEvent, FileStatus } from '../public_api';
+import { NgxDropzoneFileProcessingEvent } from '../public_api';
 
 export interface CompressImageConfig {
 	orientation: number;
@@ -42,26 +42,32 @@ export class NgxDropzoneService {
 
 	constructor(private _ngxImageCompressService: NgxImageCompressService) { }
 
-	async parseFileList(files: FileList, accept: string, maxFileSize: number, multiple: boolean, compress: boolean | CompressImageConfig, onFileProcessed: EventEmitter<NgxDropzoneFileProcessedEvent>): Promise<FileSelectResult> {
+	async parseFileList(
+		files: FileList,
+		accept: string,
+		maxFileSize: number,
+		multiple: boolean,
+		compress: boolean | CompressImageConfig,
+		onFileProcessing: EventEmitter<NgxDropzoneFileProcessingEvent>,
+	): Promise<FileSelectResult> {
 
 		const rejectedFiles: RejectedFile[] = [];
 		const addedFiles: FileExtended[] = [];
-		var remainingFilesNumber = files.length;
 
 		const filesArray = Array.from(files);
+		var remainingFilesNumber = filesArray.length - 1;
 
 		for (var file of filesArray) {
+			onFileProcessing.emit({ file, remainingFilesNumber });
 			remainingFilesNumber--;
 
 			if (!this.isAccepted(file, accept)) {
 				this.rejectFile(rejectedFiles, file, 'type');
-				onFileProcessed.emit({ file, remainingFilesNumber, status: FileStatus.REJECTED });
 				continue;
 			}
 
-			if (!multiple && files.length >= 1) {
+			if (!multiple && filesArray.length >= 1) {
 				this.rejectFile(rejectedFiles, file, 'no_multiple');
-				onFileProcessed.emit({ file, remainingFilesNumber, status: FileStatus.REJECTED });
 				continue;
 			}
 
@@ -72,12 +78,10 @@ export class NgxDropzoneService {
 
 			if (maxFileSize && file.size > maxFileSize) {
 				this.rejectFile(rejectedFiles, file, 'size');
-				onFileProcessed.emit({ file, remainingFilesNumber, status: FileStatus.REJECTED });
 				continue;
 			}
 
 			addedFiles.push(file);
-			onFileProcessed.emit({ file, remainingFilesNumber, status: FileStatus.ADDED });
 		}
 
 		const result: FileSelectResult = {

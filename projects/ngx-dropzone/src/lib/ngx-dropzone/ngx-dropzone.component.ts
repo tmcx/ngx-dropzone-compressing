@@ -9,15 +9,9 @@ export interface NgxDropzoneChangeEvent {
   rejectedFiles: RejectedFile[];
 }
 
-export enum FileStatus {
-  REJECTED = 'rejected',
-  ADDED = 'added',
-}
-
-export interface NgxDropzoneFileProcessedEvent {
+export interface NgxDropzoneFileProcessingEvent {
   file: File;
   remainingFilesNumber: number;
-  status: FileStatus;
 }
 
 @Component({
@@ -46,8 +40,8 @@ export class NgxDropzoneComponent {
   /** Emitted when any files were added or rejected. */
   @Output() readonly change = new EventEmitter<NgxDropzoneChangeEvent>();
 
-  /** Emitted when a file has been read. */
-  @Output() readonly onFileProcessed = new EventEmitter<NgxDropzoneFileProcessedEvent>();
+  /** Emitted when a file is trying to be processed. */
+  @Output() readonly onFileProcessing = new EventEmitter<NgxDropzoneFileProcessingEvent>();
 
   /** Set the accepted file types. Defaults to '*'. */
   @Input() accept = '*';
@@ -270,7 +264,7 @@ export class NgxDropzoneComponent {
   }
 
   private async handleFileDrop(files: FileList) {
-    const result = await this.service.parseFileList(files, this.accept, this.maxFileSize, this.multiple, this.compress, this.onFileProcessed);
+    const result = await this.service.parseFileList(files, this.accept, this.maxFileSize, this.multiple, this.compress, this.onFileProcessing);
 
     this.change.next({
       addedFiles: result.addedFiles,
