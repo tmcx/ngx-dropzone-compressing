@@ -153,4 +153,4 @@ This component is used within the previews to remove selected files. You can use
 
 ## Licence
 
-MIT © Mauro Sosa
+MIT © TMCX
